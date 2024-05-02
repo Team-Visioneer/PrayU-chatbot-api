@@ -20,7 +20,6 @@ class KaKaoResponse(BaseModel):
 app = FastAPI()
 spreadsheet_url = ""
 
-
 @app.post("/read-sheet")
 def read_sheet(request: KakaoRequest) -> KaKaoResponse:
     gc = gspread.service_account("secrets.json")
@@ -59,6 +58,8 @@ def read_sheet(request: KakaoRequest) -> KaKaoResponse:
         
     
     church_users = [ row['user'] for row in data if row['church'] == church ]
+    random.shuffle(church_users)
+    random_church_users = [ church_users.pop() for _ in range(min(3, len(church_users))) ]
     kakao_response = KaKaoResponse(
         version="2.0",
         template={
@@ -69,12 +70,16 @@ def read_sheet(request: KakaoRequest) -> KaKaoResponse:
                         "description": f"기도제목을 올려준 {church} 친구들 중 랜덤으로 3명을 보여드려요. 기도제목이 궁금한 친구를 선택해주세요!",
                         "buttons": [
                                 {
-                                    "action": "webLink",
-                                    "label": random.choice(church_users),
-                                    "webLinkUrl": "https://chatbot.kakao.com"
+                                    "label": f"{r_user} 기도제목 보기",
+                                    "action": "block",
+                                    "blockId": "66337723eb1acd7e513d9d1d",
+                                    "extra": {
+                                        "target_user": r_user
+                                    }
                                 }
-                                for _ in range(min(3, len(church_users)))
-                        ]
+                                for r_user in random_church_users
+                                
+                            ]
                                
                     }
                 }
@@ -103,18 +108,20 @@ def write_sheet(request: KakaoRequest) -> KaKaoResponse:
         template={
             "outputs": [ { "simpleText": {"text": f"기도제목 추가 완료!\n📌{user}\n{title}" } }]
             },
+            data=None,
         context=None
     )
     return kakao_response
 
+
 @app.post("/read-sheet-one")
-def read_sheet(request: KakaoRequest) -> KaKaoResponse:
+def read_sheet_one(request: KakaoRequest) -> KaKaoResponse:
     gc = gspread.service_account("secrets.json")
     doc = gc.open_by_url(spreadsheet_url)
     worksheet = doc.worksheet("PrayU_DB")
     data = worksheet.get_all_records()
 
-    targetUser = request.action['params']['target_user']
+    targetUser = request.action['clientExtra']['target_user']
     
     data_string = ""
     for row in data:
