@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from mangum import Mangum
-import gspread
 from pydantic import BaseModel
+import gspread
+import random
 
 class KakaoRequest(BaseModel):
     intent: dict
@@ -27,14 +28,57 @@ def read_sheet(request: KakaoRequest) -> KaKaoResponse:
     worksheet = doc.worksheet("PrayU_DB")
     data = worksheet.get_all_records()
 
-    data_string = ""
-    for row in data:
-        data_string += f"📌{row['user']}\n{row['title']}\n\n"
+    church_list = worksheet.col_values(2)
+    user_list = worksheet.col_values(3)
+    user = request.action['params']['user']
+    church = request.action['params']['church']
 
+    if church not in church_list:
+        kakao_response = KaKaoResponse(
+            version="2.0",
+            template={
+                "outputs": [ { "simpleText": {"text": f"해당 교회는 등록되어 있지 않습니다.\n{church}" } }]
+            },
+            data=None,
+            context=None
+        )
+        return kakao_response
+
+
+    if user not in user_list:
+        kakao_response = KaKaoResponse(
+            version="2.0",
+            template={
+                "outputs": [ { "simpleText": {"text": "친구들의 기도제목을 보기 위해서는 기도제목 쓰기를 완료해야됩니다!" } }]
+            },
+            data=None,
+            context=None
+        )
+        return kakao_response
+
+        
+    
+    church_users = [ row['user'] for row in data if row['church'] == church ]
     kakao_response = KaKaoResponse(
         version="2.0",
         template={
-            "outputs": [ { "simpleText": {"text": data_string.strip()} }]
+            "outputs": [
+                {
+                    "textCard": {
+                        "title": f"{church} 친구들 기도제목 보기",
+                        "description": f"기도제목을 올려준 {church} 친구들 중 랜덤으로 3명을 보여드려요. 기도제목이 궁금한 친구를 선택해주세요!",
+                        "buttons": [
+                                {
+                                    "action": "webLink",
+                                    "label": random.choice(church_users),
+                                    "webLinkUrl": "https://chatbot.kakao.com"
+                                }
+                                for _ in range(min(3, len(church_users)))
+                        ]
+                               
+                    }
+                }
+            ]
         },
         data=None,
         context=None
@@ -50,7 +94,7 @@ def write_sheet(request: KakaoRequest) -> KaKaoResponse:
     
     user = request.action['params']['user']
     title = request.action['params']['title']
-    id = len(worksheet.get_all_records())
+    id = len(worksheet.get_all_records())+1
     new_row = [id, user, title]
     worksheet.append_row(new_row)
     
