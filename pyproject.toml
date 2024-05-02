@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "prayu-api"
+version = "0.1.0"
+description = ""
+authors = ["MMyeong <ilikerunning@naver.com>"]
+readme = "README.md"
+packages = [{include = "prayu_api"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+uvicorn = "^0.29.0"
+mangum = "^0.17.0"
+gspread = "^6.1.0"
+fastapi = "^0.110.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
