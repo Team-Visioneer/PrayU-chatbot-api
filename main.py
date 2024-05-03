@@ -1,8 +1,16 @@
 from fastapi import FastAPI
 from mangum import Mangum
 from pydantic import BaseModel
+from pydantic_settings import BaseSettings, SettingsConfigDict
 import gspread
 import random
+
+
+class Config(BaseSettings):
+    spreadsheet_url: str
+
+    model_config = SettingsConfigDict(env_file=".env")
+
 
 class KakaoRequest(BaseModel):
     intent: dict
@@ -17,13 +25,13 @@ class KaKaoResponse(BaseModel):
     context: dict | None
 
 
+config = Config() # type: ignore
 app = FastAPI()
-spreadsheet_url = ""
 
 @app.post("/read-sheet")
 def read_sheet(request: KakaoRequest) -> KaKaoResponse:
     gc = gspread.service_account("secrets.json")
-    doc = gc.open_by_url(spreadsheet_url)
+    doc = gc.open_by_url(config.spreadsheet_url)
     worksheet = doc.worksheet("PrayU_DB")
     data = worksheet.get_all_records()
 
@@ -94,7 +102,7 @@ def read_sheet(request: KakaoRequest) -> KaKaoResponse:
 @app.post("/write-sheet")
 def write_sheet(request: KakaoRequest) -> KaKaoResponse:
     gc = gspread.service_account("secrets.json")
-    doc = gc.open_by_url(spreadsheet_url)
+    doc = gc.open_by_url(config.spreadsheet_url)
     worksheet = doc.worksheet("PrayU_DB")
     
     user = request.action['params']['user']
@@ -117,7 +125,7 @@ def write_sheet(request: KakaoRequest) -> KaKaoResponse:
 @app.post("/read-sheet-one")
 def read_sheet_one(request: KakaoRequest) -> KaKaoResponse:
     gc = gspread.service_account("secrets.json")
-    doc = gc.open_by_url(spreadsheet_url)
+    doc = gc.open_by_url(config.spreadsheet_url)
     worksheet = doc.worksheet("PrayU_DB")
     data = worksheet.get_all_records()
 

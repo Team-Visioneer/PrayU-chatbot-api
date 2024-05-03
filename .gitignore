@@ -175,6 +175,6 @@ pyrightconfig.json
 secrets.json
 
 # zip
-.zip
+*.zip
 
 # End of https://www.toptal.com/developers/gitignore/api/python
