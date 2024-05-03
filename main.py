@@ -105,10 +105,12 @@ def write_sheet(request: KakaoRequest) -> KaKaoResponse:
     doc = gc.open_by_url(config.spreadsheet_url)
     worksheet = doc.worksheet("PrayU_DB")
     
+    id = request.userRequest['user']['id']
+    church = request.action['params']['church']
     user = request.action['params']['user']
     title = request.action['params']['title']
-    id = len(worksheet.get_all_records())+1
-    new_row = [id, user, title]
+
+    new_row = [id, church, user, title]
     worksheet.append_row(new_row)
     
     kakao_response = KaKaoResponse(
