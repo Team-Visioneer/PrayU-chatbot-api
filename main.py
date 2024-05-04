@@ -37,8 +37,8 @@ def read_sheet(request: KakaoRequest) -> KaKaoResponse:
 
     church_list = worksheet.col_values(2)
     user_list = worksheet.col_values(3)
-    user = request.action['params']['user']
-    church = request.action['params']['church']
+    user = request.action['params']['user'] if request.action['params'] else request.action['clientExtra']['user']
+    church = request.action['params']['church'] if request.action['params'] else request.action['clientExtra']['church']
 
     if church not in church_list:
         kakao_response = KaKaoResponse(
@@ -56,7 +56,21 @@ def read_sheet(request: KakaoRequest) -> KaKaoResponse:
         kakao_response = KaKaoResponse(
             version="2.0",
             template={
-                "outputs": [ { "simpleText": {"text": "친구들의 기도제목을 보기 위해서는 기도제목 쓰기를 완료해야됩니다!" } }]
+                "outputs": [ { "textCard": {
+                    "title": "기도제목을 아직 작성하지 않았어요!", 
+                    "description": "친구들의 기도제목을 확인하고 싶다면, 기도제목을 작성해주세요!",
+                    "buttons": [
+                        {
+                            "action": "block",
+                            "label": "기도제목 쓰기",
+                            "blockId": "663644e40431eb378e9f1c4a",
+                            "extra": {
+                                "church": church,
+                                "user": user
+                            }
+                        }
+                    ]
+                } }]
             },
             data=None,
             context=None
@@ -106,21 +120,35 @@ def write_sheet(request: KakaoRequest) -> KaKaoResponse:
     worksheet = doc.worksheet("PrayU_DB")
     
     id = request.userRequest['user']['id']
-    church = request.action['params']['church']
-    user = request.action['params']['user']
+    user = request.action['params']['user'] if request.action['params'] else request.action['clientExtra']['user']
+    church = request.action['params']['church'] if request.action['params'] else request.action['clientExtra']['church']
     title = request.action['params']['title']
 
     new_row = [id, church, user, title]
     worksheet.append_row(new_row)
     
     kakao_response = KaKaoResponse(
-        version="2.0",
-        template={
-            "outputs": [ { "simpleText": {"text": f"기도제목 추가 완료!\n📌{user}\n{title}" } }]
+            version="2.0",
+            template={
+                "outputs": [ { "textCard": {
+                    "title": f"{user}님의 기도제목 작성 완료!", 
+                    "description": title,
+                    "buttons": [
+                        {
+                            "action": "block",
+                            "label": "친구들 기도제목 바로보기",
+                            "blockId": "66364670341fe159fa175586",
+                            "extra": {
+                                "church": church,
+                                "user": user
+                            }
+                        }
+                    ]
+                } }]
             },
             data=None,
-        context=None
-    )
+            context=None
+        )
     return kakao_response
 
 
