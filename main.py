@@ -131,44 +131,50 @@ def read_sheet_one(request: KakaoRequest) -> KaKaoResponse:
     worksheet = doc.worksheet("PrayU_DB")
     data = worksheet.get_all_records()
 
+    imageUrl_arr = ["https://postfiles.pstatic.net/MjAyNDA1MDRfODgg/MDAxNzE0ODIyODQ5NjE5.HvRK76jtWQuCfZlMGypdZ7hcVEghh1LZuVORhvoSTdAg.IMYM74C7JhQuRNd2fz801-EsKDOY-bC1DauWjxAb3DQg.PNG/be93d279a99d4cde9da35a75e3381a1e222.png?type=w966",
+                    "https://postfiles.pstatic.net/MjAyNDA1MDRfNTIg/MDAxNzE0ODIyODQ5Njc4.ag1SFox4UZMozvI3LEqVDRvIwaEbCLJ7P6dp3bNSFB8g.ufNaYblfwYkwnhVeA1d2H5S7tAkwkoq2ovs1gEMGQmog.PNG/%EB%8B%A4%EC%9A%B4%EB%A1%9C%EB%93%9C.png?type=w966",
+                    "https://postfiles.pstatic.net/MjAyNDA1MDRfOCAg/MDAxNzE0ODIzMjg1OTcy.f32ter3yUbDZGdc2o_vmeoonZwokjScAkq1pWg5IxQQg.MWe2VE1Cx1m9SjxT5iF_VLoh2d0YjKX1YJoz761BFtgg.PNG/92e65a180ed04aefb7d9e1984010f4c9.png?type=w966",
+                    "https://postfiles.pstatic.net/MjAyNDA1MDRfMTgz/MDAxNzE0ODIzMjg1OTY3.bogLffAt0F1i9dXlfNXwxUTdg9cS54WgAN_jbZBjOVwg.9buM5Aq9D_qeQaqF5wSkqoqeDqs7DfU5HPxwND7X-i0g.PNG/5a2cb2f347d94917b4eb7060583b8581.png?type=w966",
+                    "https://postfiles.pstatic.net/MjAyNDA1MDRfNTkg/MDAxNzE0ODIzMjg1OTk0.k7nCOhwTsEC1dOixCGHJjzvWPBplYfo7k6R5J7iyUKIg.WWvF_BYPhdT6L5w19_luKe4DCZBUPmGCJHV7eta7efEg.PNG/15f4756fe2eb4d97a0cb18822e9c891a.png?type=w966",
+                    "https://postfiles.pstatic.net/MjAyNDA1MDRfMjQy/MDAxNzE0ODIzMjg1OTY4.LhCC5HvasbcQvAbOQpnSJQcDS0bxvIG55p9ISiv6oi0g.ZsvOKQh_Vf5M_7U9ZrIj7Bw-cVzV0yf8lPtn5KxWLY4g.PNG/ad4f23e099704f5784a1320e26a3d160.png?type=w966",
+                    "https://postfiles.pstatic.net/MjAyNDA1MDRfMTA3/MDAxNzE0ODIzMjg1OTk2.MHgFEPaMHVpN9y_dlagf-ses6AdKi26zJBevlH5Bav4g.Az1qnpNfrShSSVr_GNBoNho9qGmDRUuy-5IRzHH3Jkgg.PNG/5504113b48ef4c91a7083d9928e8e866.png?type=w966"]
+    
+    imageUrl = imageUrl_arr[random.randint(0, len(imageUrl_arr))]
     targetUser = request.action['clientExtra']['target_user']
     
     data_string = ""
     for row in data:
         if row['user'] == targetUser:
-            data_string = f"📌{targetUser}\n{row['title']}\n\n"
-
+            data_string = f"{row['title']}\n\n"
+    
     kakao_response = KaKaoResponse(
         version="2.0",
         template={
             "outputs": [
                 {
                     "basicCard": {
-                        "title": targetUser,
+                        "title": f"{targetUser}님의 기도제목",
                         "description": data_string,
                         "thumbnail": {
-                            "imageUrl": "https://t1.kakaocdn.net/openbuilder/sample/lj3JUcmrzC53YIjNDkqbWK.jpg"
-          },
-          "buttons": [
-            {
-              "action": "message",
-              "label": "열어보기",
-              "messageText": "짜잔! 우리가 찾던 보물입니다"
+                            "imageUrl": imageUrl
+                            },
+                        "buttons": [
+                            {
+                            "action": "block",
+                            "label": "처음으로",
+                            "blockId": "663090f9f46daf295c7b3e40",
+                            },
+                        ]
+                        }
+                    }
+                ],
+            
             },
-            {
-              "action":  "webLink",
-              "label": "구경하기",
-              "webLinkUrl": "https://e.kakao.com/t/hello-ryan"
-            }
-          ]
-        }
-      }
-    ]
-  },
         data={
             "name":targetUser,
             "title":data_string,
-        },
+            },
+        
         context=None
     )
     return kakao_response

@@ -2,3 +2,4 @@ fastapi[all]
 uvicorn
 mangum
 gspread
+pydantic_settings
