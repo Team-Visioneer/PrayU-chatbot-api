@@ -37,8 +37,8 @@ def read_sheet(request: KakaoRequest) -> KaKaoResponse:
 
     church_list = worksheet.col_values(2)
     user_list = worksheet.col_values(3)
-    user = request.action['params']['user'] if request.action['params'] else request.action['clientExtra']['user']
-    church = request.action['params']['church'] if request.action['params'] else request.action['clientExtra']['church']
+    user = request.action['params']['user'] if "user" in request.action['params'] else request.action['clientExtra']['user']
+    church = request.action['params']['church'] if "church" in request.action['params'] else request.action['clientExtra']['church']
 
     if church not in church_list:
         kakao_response = KaKaoResponse(
@@ -120,8 +120,8 @@ def write_sheet(request: KakaoRequest) -> KaKaoResponse:
     worksheet = doc.worksheet("PrayU_DB")
     
     id = request.userRequest['user']['id']
-    user = request.action['params']['user'] if request.action['params'] else request.action['clientExtra']['user']
-    church = request.action['params']['church'] if request.action['params'] else request.action['clientExtra']['church']
+    user = request.action['params']['user'] if "user" in request.action['params'] else request.action['clientExtra']['user']
+    church = request.action['params']['church'] if "church" in request.action['params'] else request.action['clientExtra']['church']
     title = request.action['params']['title']
 
     new_row = [id, church, user, title]
