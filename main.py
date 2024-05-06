@@ -8,6 +8,7 @@ import random
 
 class Config(BaseSettings):
     spreadsheet_url: str
+
     model_config = SettingsConfigDict(env_file=".env")
 
 
@@ -32,23 +33,22 @@ def read_sheet(request: KakaoRequest) -> KaKaoResponse:
     gc = gspread.service_account("secrets.json")
     doc = gc.open_by_url(config.spreadsheet_url)
     worksheet = doc.worksheet("PrayU_DB")
-    authSheet = doc.worksheet("Auth")
-    
-    authData = authSheet.get_all_records()
-    
     data = worksheet.get_all_records()
+    authSheet = doc.worksheet("Auth")
+
+    authData = authSheet.get_all_records()
     church_list = worksheet.col_values(2)
     user_list = worksheet.col_values(3)
     
     id = request.userRequest['user']['id']
     user = request.action['params']['user'] if "user" in request.action['params'] else request.action['clientExtra']['user']
     church = request.action['params']['church'] if "church" in request.action['params'] else request.action['clientExtra']['church']
-    
+
     for row in authData:
         if str(row['id']) == id:
-            user = row['user']
-            break
-
+            user = str(row['user'])
+            print(user)
+            
     if church not in church_list:
         kakao_response = KaKaoResponse(
             version="2.0",
@@ -59,7 +59,8 @@ def read_sheet(request: KakaoRequest) -> KaKaoResponse:
             context=None
         )
         return kakao_response
-    
+
+
     if user not in user_list:
         kakao_response = KaKaoResponse(
             version="2.0",
@@ -84,8 +85,10 @@ def read_sheet(request: KakaoRequest) -> KaKaoResponse:
             context=None
         )
         return kakao_response
+
+        
     
-    church_users = [ row['user'] for row in data if row['church'] == church and row['user'] != user ]
+    church_users = [ row['user'] for row in data if row['church'] == church ]
     random.shuffle(church_users)
     random_church_users = [ church_users.pop() for _ in range(min(3, len(church_users))) ]
     kakao_response = KaKaoResponse(
@@ -134,12 +137,11 @@ def write_sheet(request: KakaoRequest) -> KaKaoResponse:
 
     if id not in idList:
         authSheet.append_row([id, user])
-    else:
-        authData = authSheet.get_all_records()
-        for row in authData:
-            if  str(row['id']) == id:
-                user = row['user']
-                break
+    
+    authData = authSheet.get_all_records()
+    for row in authData:
+        if str(row['id']) == id:
+            user = str(row['user'])
             
     new_row = [id, church, user, title]
     worksheet.append_row(new_row)
@@ -224,43 +226,5 @@ def read_sheet_one(request: KakaoRequest) -> KaKaoResponse:
     )
     return kakao_response
     
-
-@app.post("/read-sheet-me")
-def read_sheet_me(request: KakaoRequest) -> KaKaoResponse:
-    gc = gspread.service_account("secrets.json")
-    doc = gc.open_by_url(config.spreadsheet_url)
-    worksheet = doc.worksheet("PrayU_DB")
-    data = worksheet.get_all_records()
-
-    id = request.userRequest['user']['id']
-    titles = [ row['title'] for row in data if row['id'] == id ]
-    titles_with_index = [ f"{i}.{title}" for i, title in enumerate(titles, start=1) ]
-
-    kakao_response = KaKaoResponse(
-        version="2.0",
-        template={
-            "outputs": [
-                {
-                    "textCard": {
-                        "title": f"{data[0]['user']}님이 작성한 기도제목" if titles else "기도제목을 아직 작성하지 않았어요!",
-                        "description": "\n".join(titles_with_index) if titles else "친구들의 기도제목을 확인하고 싶다면, 기도제목을 작성해주세요!",
-                        "buttons": [
-                            {
-                                "action": "block",
-                                "label": "기도제목 쓰기",
-                                "blockId": "6630ab075406940af2ae1631",
-                            }
-                        ]
-                    }
-                }
-            ]
-        },
-        data=None,
-        context=None
-    )
-    return kakao_response
-        
-
-        
 
 handler = Mangum(app)
