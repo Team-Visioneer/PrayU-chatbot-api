@@ -45,8 +45,9 @@ def read_sheet(request: KakaoRequest) -> KaKaoResponse:
     church = request.action['params']['church'] if "church" in request.action['params'] else request.action['clientExtra']['church']
     
     for row in authData:
-        if row['ID'] == id:
+        if str(row['id']) == id:
             user = row['user']
+            break
 
     if church not in church_list:
         kakao_response = KaKaoResponse(
@@ -131,11 +132,19 @@ def write_sheet(request: KakaoRequest) -> KaKaoResponse:
     church = request.action['params']['church'] if "church" in request.action['params'] else request.action['clientExtra']['church']
     title = request.action['params']['title']
 
+    if id not in idList:
+            authSheet.append_row([id, user])
+            print(user)
+    else:
+        authData = authSheet.get_all_records()
+        for row in authData:
+            if  str(row['id']) == id:
+                user = row['user']
+                print(user)
+                break
+            
     new_row = [id, church, user, title]
     worksheet.append_row(new_row)
-    
-    if id not in idList:
-        authSheet.append_row([id, user])
     
     kakao_response = KaKaoResponse(
             version="2.0",
