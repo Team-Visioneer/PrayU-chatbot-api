@@ -8,7 +8,6 @@ import random
 
 class Config(BaseSettings):
     spreadsheet_url: str
-
     model_config = SettingsConfigDict(env_file=".env")
 
 
@@ -33,12 +32,21 @@ def read_sheet(request: KakaoRequest) -> KaKaoResponse:
     gc = gspread.service_account("secrets.json")
     doc = gc.open_by_url(config.spreadsheet_url)
     worksheet = doc.worksheet("PrayU_DB")
+    authSheet = doc.worksheet("Auth")
+    
+    authData = authSheet.get_all_records()
+    
     data = worksheet.get_all_records()
-
     church_list = worksheet.col_values(2)
     user_list = worksheet.col_values(3)
+    
+    id = request.userRequest['user']['id']
     user = request.action['params']['user'] if "user" in request.action['params'] else request.action['clientExtra']['user']
     church = request.action['params']['church'] if "church" in request.action['params'] else request.action['clientExtra']['church']
+    
+    for row in authData:
+        if row['ID'] == id:
+            user = row['user']
 
     if church not in church_list:
         kakao_response = KaKaoResponse(
@@ -50,8 +58,7 @@ def read_sheet(request: KakaoRequest) -> KaKaoResponse:
             context=None
         )
         return kakao_response
-
-
+    
     if user not in user_list:
         kakao_response = KaKaoResponse(
             version="2.0",
@@ -76,8 +83,6 @@ def read_sheet(request: KakaoRequest) -> KaKaoResponse:
             context=None
         )
         return kakao_response
-
-        
     
     church_users = [ row['user'] for row in data if row['church'] == church ]
     random.shuffle(church_users)
@@ -118,6 +123,8 @@ def write_sheet(request: KakaoRequest) -> KaKaoResponse:
     gc = gspread.service_account("secrets.json")
     doc = gc.open_by_url(config.spreadsheet_url)
     worksheet = doc.worksheet("PrayU_DB")
+    authSheet = doc.worksheet("Auth")
+    idList = authSheet.col_values(1)
     
     id = request.userRequest['user']['id']
     user = request.action['params']['user'] if "user" in request.action['params'] else request.action['clientExtra']['user']
@@ -126,6 +133,9 @@ def write_sheet(request: KakaoRequest) -> KaKaoResponse:
 
     new_row = [id, church, user, title]
     worksheet.append_row(new_row)
+    
+    if id not in idList:
+        authSheet.append_row([id, user])
     
     kakao_response = KaKaoResponse(
             version="2.0",
