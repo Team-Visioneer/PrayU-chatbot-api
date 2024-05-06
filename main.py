@@ -133,14 +133,12 @@ def write_sheet(request: KakaoRequest) -> KaKaoResponse:
     title = request.action['params']['title']
 
     if id not in idList:
-            authSheet.append_row([id, user])
-            print(user)
+        authSheet.append_row([id, user])
     else:
         authData = authSheet.get_all_records()
         for row in authData:
             if  str(row['id']) == id:
                 user = row['user']
-                print(user)
                 break
             
     new_row = [id, church, user, title]
